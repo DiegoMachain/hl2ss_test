@@ -13,7 +13,15 @@ import hl2ss
 import hl2ss_mp
 import hl2ss_3dcv
 
-import rospy
+import numpy as np
+
+# import rospy
+# import rosbag
+# from std_msgs.msg import Header
+# from sensor_msgs.msg import PointField
+# import sensor_msgs.point_cloud2 as pcl2
+# from geometry_msgs.msg import PoseStamped
+# import tf
 
 # Settings --------------------------------------------------------------------
 
@@ -44,6 +52,15 @@ voxel_length = 1/100
 sdf_trunc = 0.04
 max_depth = 3.0
 
+def writeData(path, data):
+    file = open(path, "w")
+    trafo = np.asarray(data)
+    for i in range(np.shape(data)[0]):
+        line = "%s, %s, %s, %s;" % (data[i][0], data[i][1], data[i][2], data[i][3])
+        file.write(line)
+    # close file
+    file.close()
+
 #------------------------------------------------------------------------------
 
 if __name__ == '__main__':
@@ -53,6 +70,17 @@ if __name__ == '__main__':
         global enable
         enable = key != keyboard.Key.space
         return enable
+
+    # # Init ROS
+    # rospy.init_node('HoloLensLogger', anonymous=False)
+
+    # # Open rosbag
+
+    # bag = rosbag.Bag('test_rgbd.bag', 'w')
+
+    # Change this path for multiple runs
+    path = "./output/run1/"
+    count = 0
 
     listener = keyboard.Listener(on_press=on_press)
     listener.start()
@@ -72,7 +100,6 @@ if __name__ == '__main__':
     xy1, scale, depth_to_pv_image = hl2ss_3dcv.rm_depth_registration(uv2xy, calibration_lt.scale, calibration_lt.extrinsics, calibration_pv.intrinsics, calibration_pv.extrinsics)
 
     volume = o3d.pipelines.integration.ScalableTSDFVolume(voxel_length=voxel_length, sdf_trunc=sdf_trunc, color_type=o3d.pipelines.integration.TSDFVolumeColorType.RGB8)
-    # focal length x, focal length y, center x, center y
     intrinsics_depth = o3d.camera.PinholeCameraIntrinsic(hl2ss.Parameters_RM_DEPTH_LONGTHROW.WIDTH, hl2ss.Parameters_RM_DEPTH_LONGTHROW.HEIGHT, calibration_lt.intrinsics[0, 0], calibration_lt.intrinsics[1, 1], calibration_lt.intrinsics[2, 0], calibration_lt.intrinsics[2, 1])
 
     vis = o3d.visualization.Visualizer()
@@ -108,11 +135,51 @@ if __name__ == '__main__':
             continue
 
         depth = hl2ss_3dcv.rm_depth_normalize(data_lt.payload.depth, calibration_lt.undistort_map, scale)
+        # pose of pv frame directly gives pv to world as opposed to RM sensors 
         depth_to_pv_image = hl2ss_3dcv.camera_to_rignode(calibration_lt.extrinsics) @ hl2ss_3dcv.reference_to_world(data_lt.pose) @ hl2ss_3dcv.world_to_reference(data_pv.pose) @ calibration_pv.intrinsics
 
         rgb, depth = hl2ss_3dcv.rm_depth_rgbd_registered(depth, data_pv.payload, xy1, depth_to_pv_image, cv2.INTER_LINEAR)
+        # print("rgb: ", rgb)
+        # print("depth: ", depth)
+        # print("intrinsics_depth", intrinsics_depth.intrinsic_matrix)
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(o3d.geometry.Image(rgb), o3d.geometry.Image(depth), depth_scale=1, depth_trunc=max_depth, convert_rgb_to_intensity=False)
+
+        pcd_tmp = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsics_depth)
+        # gives the transformation from world to depth_camera
         depth_world_to_camera = hl2ss_3dcv.world_to_reference(data_lt.pose) @ hl2ss_3dcv.rignode_to_camera(calibration_lt.extrinsics)
+
+        o3d.io.write_point_cloud("%sraw_pcd_%s.ply" % (path, count), pcd_tmp)
+
+        # Flip it, otherwise the pointcloud will be upside down
+        pcd_tmp.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+        # print(depth_world_to_camera.transpose())
+        # pcd_tmp.transform(depth_world_to_camera.transpose())
+        # o3d.visualization.draw_geometries([pcd], zoom=0.5)
+
+        # print("Before saving")
+        o3d.io.write_point_cloud("%spcd_%s.ply" % (path, count), pcd_tmp)
+        count = count + 1
+        trafo_path = "%strafo_%s" % (path, count)
+        writeData(trafo_path, depth_world_to_camera.transpose())
+        intr_path = "%sintr_%s" % (path, count)
+        writeData(intr_path, intrinsics_depth.intrinsic_matrix)
+        # print("After saving")
+
+        #  # Generate ROS PCL message 
+        # header = Header()
+        # t = rospy.Time.now()
+        # print("t: ", t)
+        # header.stamp = t
+        # print("pcl stamp: ", header.stamp)
+        # header.frame_id = "/hololens"
+        # # Points have to be filled exactly like this to enable conversion via pcl
+        # fields = [PointField('x', 0, PointField.FLOAT32, 1),
+        #             PointField('y', 4, PointField.FLOAT32, 1),
+        #             PointField('z', 8, PointField.FLOAT32, 1), ]
+        # pcl_msg = pcl2.create_cloud(header, fields, pcd_tmp.points)
+
+        # # Save messages rosbag
+        # bag.write('hololens_pcl', pcl_msg)
 
         volume.integrate(rgbd, intrinsics_depth, depth_world_to_camera.transpose())
         pcd_tmp = volume.extract_point_cloud()

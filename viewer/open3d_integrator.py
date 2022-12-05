@@ -14,7 +14,8 @@ import hl2ss_3dcv
 # Settings --------------------------------------------------------------------
 
 # HoloLens address
-host = '192.168.1.7'
+# host = "192.168.1.7"
+host = "10.10.10.218"
 
 # Calibration path
 calibration_path = '../calibration'
@@ -40,7 +41,10 @@ if __name__ == '__main__':
     listener = keyboard.Listener(on_press=on_press)
     listener.start()
 
-    calibration_lt = hl2ss_3dcv.get_calibration_rm(host, hl2ss.StreamPort.RM_DEPTH_LONGTHROW, calibration_path)
+    # Get camera calibration
+
+    calibration_lt = hl2ss.download_calibration_rm_depth_longthrow(host, hl2ss.StreamPort.RM_DEPTH_LONGTHROW)
+    # calibration_lt = hl2ss_3dcv.get_calibration_rm(host, hl2ss.StreamPort.RM_DEPTH_LONGTHROW, calibration_path)
 
     uv2xy = hl2ss_3dcv.compute_uv2xy(calibration_lt.intrinsics, hl2ss.Parameters_RM_DEPTH_LONGTHROW.WIDTH, hl2ss.Parameters_RM_DEPTH_LONGTHROW.HEIGHT)
     xy1, scale, _ = hl2ss_3dcv.rm_depth_registration(uv2xy, calibration_lt.scale, calibration_lt.extrinsics, calibration_lt.intrinsics, calibration_lt.intrinsics)
@@ -77,6 +81,12 @@ if __name__ == '__main__':
         rgb = hl2ss_3dcv.rm_depth_ab_to_uint8(rgb)
         rgb = hl2ss_3dcv.rm_vlc_to_rgb(rgb)
         rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(o3d.geometry.Image(rgb), o3d.geometry.Image(depth), depth_scale=1, depth_trunc=max_depth, convert_rgb_to_intensity=False)
+        
+        pcd = o3d.geometry.PointCloud.create_from_rgbd_image(rgbd, intrinsics_depth)
+        # Flip it, otherwise the pointcloud will be upside down
+        pcd.transform([[1, 0, 0, 0], [0, -1, 0, 0], [0, 0, -1, 0], [0, 0, 0, 1]])
+        # o3d.visualization.draw_geometries([pcd], zoom=0.5)
+
         depth_world_to_camera = hl2ss_3dcv.world_to_reference(data_depth.pose) @ hl2ss_3dcv.rignode_to_camera(calibration_lt.extrinsics)
 
         volume.integrate(rgbd, intrinsics_depth, depth_world_to_camera.transpose())
@@ -87,8 +97,8 @@ if __name__ == '__main__':
             pcd = pcd_tmp
             vis.add_geometry(pcd)
         else:
-            pcd.points = pcd_tmp.points
-            pcd.colors = pcd_tmp.colors
+            # pcd.points = pcd_tmp.points
+            # pcd.colors = pcd_tmp.colors
             vis.update_geometry(pcd)
 
         vis.poll_events()

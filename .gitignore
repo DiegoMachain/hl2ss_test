@@ -15,3 +15,7 @@ unity/__pycache__/
 client/__pycache__/
 tools/__pycache__/
 calibration
+*.bag
+viewer/pcls
+viewer/pcls_final
+viewer/bags

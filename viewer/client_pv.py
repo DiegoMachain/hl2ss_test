@@ -16,7 +16,8 @@ import cv2
 # Settings --------------------------------------------------------------------
 
 # HoloLens address
-host = "192.168.1.7"
+# host = "192.168.1.7"
+host = "10.10.10.218"
 
 # Port
 port = hl2ss.StreamPort.PERSONAL_VIDEO
@@ -25,7 +26,8 @@ port = hl2ss.StreamPort.PERSONAL_VIDEO
 # 0: video
 # 1: video + camera pose
 # 2: query calibration (single transfer)
-mode = hl2ss.StreamMode.MODE_1
+# mode = hl2ss.StreamMode.MODE_1
+mode = hl2ss.StreamMode.MODE_2
 
 # Camera parameters
 width     = 1920
