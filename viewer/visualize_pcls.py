@@ -31,7 +31,7 @@ if __name__ == '__main__':
     files.sort(key=natural_keys)
 
     c = 0
-    step = 20
+    step = 10
 
     # read in all the files
     for i, file in enumerate(files):
