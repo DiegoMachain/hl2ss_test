@@ -69,32 +69,32 @@ def transform_data(pcl, world_to_hololens):
 
 # ----------------------------------------------------------------------------------------------------------- #
 
-# Main code 
-argParser = argparse.ArgumentParser()
-argParser.add_argument("-f", "--folder", help="path to folder with ply files and trafos")
+if __name__ == '__main__':
+  argParser = argparse.ArgumentParser()
+  argParser.add_argument("-f", "--folder", help="path to folder with ply files and trafos")
 
-args = argParser.parse_args()
+  args = argParser.parse_args()
 
-# print("args.name=%s" % args.folder)
+  # print("args.name=%s" % args.folder)
 
-# Import pcd files 
-pcd_files = glob.glob("%sraw*.ply" % args.folder)
-pcd_files.sort(key=natural_keys)
-pcds = import_pcds(pcd_files)
+  # Import pcd files 
+  pcd_files = glob.glob("%sraw*.ply" % args.folder)
+  pcd_files.sort(key=natural_keys)
+  pcds = import_pcds(pcd_files)
 
-# Import trafo files
-trafo_files = glob.glob("%strafo*" % args.folder)
-trafo_files.sort(key=natural_keys)
-trafos = import_trafos(trafo_files)
+  # Import trafo files
+  trafo_files = glob.glob("%strafo*" % args.folder)
+  trafo_files.sort(key=natural_keys)
+  trafos = import_trafos(trafo_files)
 
-# Transform the point clouds to the world frame and save again
-for i in range(len(pcd_files)):
+  # Transform the point clouds to the world frame and save again
+  for i in range(len(pcd_files)):
 
-  # read ply file
-  pcd1 = o3d.io.read_point_cloud(pcd_files[i])
+    # read ply file
+    pcd1 = o3d.io.read_point_cloud(pcd_files[i])
 
-  # Now transform the data
-  pcd1 = transform_data(pcd1, trafos[i])
+    # Now transform the data
+    pcd1 = transform_data(pcd1, trafos[i])
 
-  # save transformed point cloud
-  o3d.io.write_point_cloud("%sworldpcd_%s.ply" % (args.folder, i), pcd1)
+    # save transformed point cloud
+    o3d.io.write_point_cloud("%sworldpcd_%s.ply" % (args.folder, i), pcd1)
