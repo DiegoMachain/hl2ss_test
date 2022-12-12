@@ -4,6 +4,7 @@ import glob
 import numpy as np
 import open3d as o3d
 import re
+import matplotlib.pyplot as plt
 
 # folder = "./pcls_final/"
 # folder = "/home/toni/Documents/datasets/hololens_mike/output/run1_MAV_office/"
@@ -77,6 +78,18 @@ def transform_data(pcl, world_to_hololens):
   # transformed_points = np.asarray(transformed_points)
   return pcl
 
+def get_min_max(pcd1):
+  min = 10000
+  max = -10000
+  for p in pcd1.points:
+    # print("p: ", p)
+    if p[1] < min:
+      # print("p[2]: ", p[2])
+      min = p[1]
+    if p[1] > max:
+      max = p[1]
+  return min, max
+
 
 class Visualizer():
     def __init__(self):
@@ -102,10 +115,15 @@ class Visualizer():
         c = 0
         n = 5                                           # Number of point clouds to be displayed
 
+        # Get min and max z values 
+        min = 100000
+        max = -100000
+
         # read in all the files
         # for i, file in enumerate(pcd_files):
         # for i in range(len(pcd_files)-n):
-        for i in range(5, 50):
+        for i in range(len(pcd_files)):
+        # for i in range(5, 50):
 
             # if c < (len(files)-3):
             # if c < 10:
@@ -127,11 +145,10 @@ class Visualizer():
 
                 # read ply file
                 pcd1 = o3d.io.read_point_cloud(pcd_files[i])
-                pcd2 = o3d.io.read_point_cloud(pcd_files[i+1])
-                pcd3 = o3d.io.read_point_cloud(pcd_files[i+2])
-                pcd4 = o3d.io.read_point_cloud(pcd_files[i+3])
-                pcd5 = o3d.io.read_point_cloud(pcd_files[i+4])
-
+                # pcd2 = o3d.io.read_point_cloud(pcd_files[i+1])
+                # pcd3 = o3d.io.read_point_cloud(pcd_files[i+2])
+                # pcd4 = o3d.io.read_point_cloud(pcd_files[i+3])
+                # pcd5 = o3d.io.read_point_cloud(pcd_files[i+4])
 
                 # pcd3 = o3d.io.read_point_cloud(pcd_files[i+2])
                 print("i: %s" % i)
@@ -140,20 +157,67 @@ class Visualizer():
                 # print("Trafo %s: %s" % (i+1, trafos[i+1]))
 
                 # # visualize and save a couple of screenshots
-                o3d.visualization.draw_geometries([pcd1, pcd2, pcd3, pcd4, pcd5])
+                # o3d.visualization.draw_geometries([pcd1, pcd2, pcd3, pcd4, pcd5])
                 # o3d.visualization.draw_geometries([pcd1, pcd2, pcd3])
 
                 # Now transform the data
                 pcd1 = transform_data(pcd1, trafos[i])
-                pcd2 = transform_data(pcd2, trafos[i+1])
-                pcd3 = transform_data(pcd3, trafos[i+2])
-                pcd4 = transform_data(pcd4, trafos[i+3])
-                pcd5 = transform_data(pcd5, trafos[i+4])
+                # pcd2 = transform_data(pcd2, trafos[i+1])
+                # pcd3 = transform_data(pcd3, trafos[i+2])
+                # pcd4 = transform_data(pcd4, trafos[i+3])
+                # pcd5 = transform_data(pcd5, trafos[i+4])
 
-                o3d.visualization.draw_geometries([pcd1, pcd2, pcd3, pcd4, pcd5], "After transform")
+                # Get the min and max of the point cloud
+                min_pcl, max_pcl = get_min_max(pcd1)
+                print("Min %s, Max %s" % (min_pcl, max_pcl))
+                if (min_pcl < min):
+                  min = min_pcl
+                  if (min < -2):
+                    print("\n\nATTENTION\n\n")
+                    points = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]]
+                    lines = [[0, 1], [0, 2], [0, 3]]
+                    # colors = [[1, 0, 0] for i in range(len(lines))]
+                    colors = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+                    line_set = o3d.geometry.LineSet()
+                    line_set.points = o3d.utility.Vector3dVector(points)
+                    line_set.lines = o3d.utility.Vector2iVector(lines)
+                    line_set.colors = o3d.utility.Vector3dVector(colors)
+                    o3d.visualization.draw_geometries([line_set, pcd1])
+                if (max_pcl > max):
+                  max = max_pcl
+
+                # o3d.visualization.draw_geometries([pcd1, pcd2, pcd3, pcd4, pcd5], "After transform")
+
+                # # Visualize the histogram of the z values
+                # plt.figure()
+                # # plt.hist(x, bins=len(bc_distr))
+                # plt.hist(np.asarray(pcd1.points)[:,2])
+                # plt.title("Z values")
+                # plt.show()
+                # print("Points shape: ", (np.asarray(pcd1.points).shape))
+
+                # print("Points: ")
+                # print(np.asarray(pcd1.points))
+
+                o3d.io.write_point_cloud("%sworldpcd_%s.ply" % (folder, c), pcd1)
 
                 c += 1
     
+        print("Overall: Min %s, Max %s" % (min, max))
+        print("z values: ", np.asarray(pcd1.points)[:,1])
+
+
+        points = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        lines = [[0, 1], [0, 2], [0, 3]]
+        # colors = [[1, 0, 0] for i in range(len(lines))]
+        colors = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+        line_set = o3d.geometry.LineSet()
+        line_set.points = o3d.utility.Vector3dVector(points)
+        line_set.lines = o3d.utility.Vector2iVector(lines)
+        line_set.colors = o3d.utility.Vector3dVector(colors)
+        o3d.visualization.draw_geometries([line_set, pcd1])
+
+
         #     # output path
         #     parts = file.split(".")
         #     parts = parts[0].split("mesh")
