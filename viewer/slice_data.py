@@ -6,6 +6,7 @@ import open3d as o3d
 import re
 import argparse
 import random
+import csv
 
 # folder = "/home/toni/Documents/datasets/hololens_mike/output/run1_MAV_office/"
 # folder = "/home/toni/Documents/datasets/hololens_mike/output/run2_MAV_corridor/"
@@ -60,9 +61,9 @@ def get_free_points(point, trafo):
   pose = [trafo[0,3], trafo[1,3], trafo[2,3]]
   vector = point - pose 
   distance = np.sqrt(np.power(vector[0],2) + np.power(vector[1],2) + np.power(vector[2],2))
-  print("Range: %s, distance: %s" % (vector, distance))
+  # print("Range: %s, distance: %s" % (vector, distance))
   num_points = np.maximum(1, (distance/2).astype(int))
-  print("Getting number of points: %s" % num_points)
+  # print("Getting number of points: %s" % num_points)
   # print(num_points.shape)
   points = []
   labels = []
@@ -81,15 +82,6 @@ def get_free_points(point, trafo):
     labels.append(0)
 
   return points, labels
-
-    # auto distance = scan.ranges[i] * std::sqrt(zero_one(gen));
-    #             distance = std::max(0.1, std::min(scan.ranges[i] - 0.1, distance));
-    #             points.push_back(Eigen::Vector2d(
-    #                         pose[0] + distance * std::cos(angle),
-    #                         pose[1] + distance * std::sin(angle)
-    #             ));
-    #             labels.push_back(0);
-
 
 # ----------------------------------------------------------------------------------------------------------- #
 
@@ -141,6 +133,9 @@ if __name__ == '__main__':
   height_max = biased_height - tolerance
   print("Slicing data at height %s with tolerance +-%s: %s to %s" % (biased_height, tolerance, height_min, height_max))
 
+  # Open the output csv file 
+  file = open('%sdataset.csv' % args.folder, 'w')
+  writer = csv.writer(file)
 
   # Create new slice point clouds and save again
   sliced_pcls = []
@@ -181,7 +176,12 @@ if __name__ == '__main__':
           color[:,2] = 0.
           colors.append(np.squeeze(color))
 
-        # TODO write all points to csv file 
+    # TODO write all points to csv file 
+    # 0	0.221734904761523	-1.05419423808366	1
+    # write out values in x-z-plane (vertical is -y)
+    for j in range(len(points)):
+      data = ["0", str(points[j][0]), str(points[j][2]), str(labels[j])]
+      writer.writerow(data)
 
     print("Point cloud with %s points had %s points in the range" % (len(pcd.points), len(points)))
 
@@ -193,24 +193,26 @@ if __name__ == '__main__':
     # save transformed point cloud
     o3d.io.write_point_cloud("%sslicedpcd_%s.ply" % (args.folder, i), pcd_new)
 
-    # visualize the data
-    if got_points:
-      # create a line set from the position to the points 
-      hololens_to_world = np.linalg.inv(trafos[i])
-      # points.insert(0, [hololens_to_world[0,3], hololens_to_world[2,3], hololens_to_world[1,3]])
-      points.insert(0, [hololens_to_world[0,3], hololens_to_world[1,3], hololens_to_world[2,3]])
-      # print("Points 0: ", points[0])
-      # print("Trafo: ", hololens_to_world)
-      lines = []
-      for j in range(1, len(points)-1):
-        lines.append([0,j])
-        # lines = [[0, 1], [0, 2], [0, 3], [0, 8], [0, 10]]
-      colors = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
-      line_set = o3d.geometry.LineSet()
-      line_set.points = o3d.utility.Vector3dVector(points)
-      line_set.lines = o3d.utility.Vector2iVector(lines)
-      line_set.colors = o3d.utility.Vector3dVector(colors)
-      o3d.visualization.draw_geometries([line_set, pcd, pcd_new])
+    # # visualize the data
+    # if got_points:
+    #   # create a line set from the position to the points 
+    #   hololens_to_world = np.linalg.inv(trafos[i])
+    #   # points.insert(0, [hololens_to_world[0,3], hololens_to_world[2,3], hololens_to_world[1,3]])
+    #   points.insert(0, [hololens_to_world[0,3], hololens_to_world[1,3], hololens_to_world[2,3]])
+    #   # print("Points 0: ", points[0])
+    #   # print("Trafo: ", hololens_to_world)
+    #   lines = []
+    #   for j in range(1, len(points)-1):
+    #     lines.append([0,j])
+    #     # lines = [[0, 1], [0, 2], [0, 3], [0, 8], [0, 10]]
+    #   colors = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    #   line_set = o3d.geometry.LineSet()
+    #   line_set.points = o3d.utility.Vector3dVector(points)
+    #   line_set.lines = o3d.utility.Vector2iVector(lines)
+    #   line_set.colors = o3d.utility.Vector3dVector(colors)
+    #   o3d.visualization.draw_geometries([line_set, pcd, pcd_new])
 
-      # o3d.visualization.draw_geometries([pcd])
-      got_points = False
+    #   # o3d.visualization.draw_geometries([pcd])
+    #   got_points = False
+
+  file.close()
