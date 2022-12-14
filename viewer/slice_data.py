@@ -170,7 +170,7 @@ if __name__ == '__main__':
     # write all points to csv file 
     # write out values in x-z-plane (vertical is -y)
     for j in range(len(points)):
-      data = ["0", str(points[j][0]), str(-points[j][2]), str(labels[j])]
+      data = [str(points[j][0]), str(-points[j][2]), str(labels[j])]
       writer.writerow(data)
 
     print("Point cloud with %s points had %s points in the range" % (len(pcd.points), len(points)))

@@ -27,7 +27,7 @@ if __name__ == '__main__':
           reader = csv.reader(csvfile, delimiter=' ', quotechar='|') 
           for row in reader:
             vals = row[0].split(",")
-            point = [float(vals[1]), float(vals[2])]
+            point = [float(vals[0]), float(vals[1])]
             if int(vals[-1]) == 0:
               free_points.append(point)
             else: 
