@@ -27,8 +27,7 @@ if __name__ == '__main__':
           reader = csv.reader(csvfile, delimiter=' ', quotechar='|') 
           for row in reader:
             vals = row[0].split(",")
-            # flip the y-axis to align with HoloLens coordinate system
-            point = [float(vals[1]), -float(vals[2])]
+            point = [float(vals[1]), float(vals[2])]
             if int(vals[-1]) == 0:
               free_points.append(point)
             else: 
@@ -41,5 +40,7 @@ if __name__ == '__main__':
 
   # Visualize the hit points
   hit_points = np.asarray(hit_points)
+  free_points = np.asarray(free_points)
   plt.scatter(hit_points[:,0], hit_points[:,1])
+  # plt.scatter(free_points[:,0], free_points[:,1], c = 'r')
   plt.show()
