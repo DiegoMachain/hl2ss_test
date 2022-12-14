@@ -61,10 +61,7 @@ def get_free_points(point, trafo):
   pose = [trafo[0,3], trafo[1,3], trafo[2,3]]
   vector = point - pose 
   distance = np.sqrt(np.power(vector[0],2) + np.power(vector[1],2) + np.power(vector[2],2))
-  # print("Range: %s, distance: %s" % (vector, distance))
   num_points = np.maximum(1, (distance/2).astype(int))
-  # print("Getting number of points: %s" % num_points)
-  # print(num_points.shape)
   points = []
   labels = []
   
@@ -72,6 +69,7 @@ def get_free_points(point, trafo):
     # draw random number uniformly between 0 and 1
     free_distance = distance * np.sqrt(random.uniform(0,1))
     free_distance = np.maximum(0.1, np.minimum(distance - 0.1, free_distance))
+    free_point = [pose[0] + free_distance/distance * vector[0], pose[1] + free_distance/distance * vector[1], pose[2] + free_distance/distance * vector[2]]
     points.append(free_point)
     labels.append(0)
 
@@ -103,10 +101,9 @@ if __name__ == '__main__':
   trafo_files.sort(key=natural_keys)
   trafos = import_trafos(trafo_files)
 
+  # Get the min and max along the vertical axis 
   min = 10000
   max = -10000
-
-  # Get the min and max along the vertical axis 
   for i in range(len(pcd_files)):
 
     # read ply file
@@ -122,8 +119,6 @@ if __name__ == '__main__':
 
   # Print out the min and max value (vertical axis is -y, see Research api)
   print("Min vertical: %s, max vertical: %s" % (min, max))
-  # biased_height = max - height
-  # biased_height = -height
   biased_height = height
   height_min = biased_height + tolerance
   height_max = biased_height - tolerance
@@ -172,8 +167,7 @@ if __name__ == '__main__':
           color[:,2] = 0.
           colors.append(np.squeeze(color))
 
-    # TODO write all points to csv file 
-    # 0	0.221734904761523	-1.05419423808366	1
+    # write all points to csv file 
     # write out values in x-z-plane (vertical is -y)
     for j in range(len(points)):
       data = ["0", str(points[j][0]), str(points[j][2]), str(labels[j])]
@@ -189,7 +183,7 @@ if __name__ == '__main__':
     # save transformed point cloud
     o3d.io.write_point_cloud("%sslicedpcd_%s.ply" % (args.folder, i), pcd_new)
 
-    # # visualize the data
+    # # visualize the data --> only for debugging
     # if got_points:
     #   # create a line set from the position to the points 
     #   hololens_to_world = np.linalg.inv(trafos[i])
