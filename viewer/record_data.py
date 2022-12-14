@@ -66,8 +66,8 @@ if __name__ == '__main__':
       return enable
 
   # Change this path for multiple runs
-  path = argparse.output
-  calibration_path = argparse.calibration
+  path = args.output
+  calibration_path = args.calibration
   count = 0
 
   listener = keyboard.Listener(on_press=on_press)

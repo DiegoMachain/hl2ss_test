@@ -31,7 +31,7 @@ if __name__ == '__main__':
     files.sort(key=natural_keys)
 
     c = 0
-    step = 10
+    step = 1
 
     # read in all the files
     for i, file in enumerate(files):
@@ -42,8 +42,17 @@ if __name__ == '__main__':
             pcd1 = o3d.io.read_point_cloud(files[i])
             pcd2 = o3d.io.read_point_cloud(files[i+1*step])
             pcd3 = o3d.io.read_point_cloud(files[i+2*step])
+            print("c: %s" % c)
+
+            points = [[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]]
+            lines = [[0, 1], [0, 2], [0, 3]]
+            colors = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+            line_set = o3d.geometry.LineSet()
+            line_set.points = o3d.utility.Vector3dVector(points)
+            line_set.lines = o3d.utility.Vector2iVector(lines)
+            line_set.colors = o3d.utility.Vector3dVector(colors)
 
             # visualize three point clouds at once
-            o3d.visualization.draw_geometries([pcd1, pcd2, pcd3])
+            o3d.visualization.draw_geometries([pcd1, pcd2, pcd3, line_set])
 
             c += 1

@@ -34,7 +34,7 @@ cp ../tools/* ./
 ### Create output folder and calibration output folder
 ```
 export OUTPUT_PATH=<path-to-desired-output-folder>
-mkdir $OUTPUT_PATH
+mkdir -p $OUTPUT_PATH
 mkdir $OUTPUT_PATH/calibration
 ```
 
@@ -63,6 +63,17 @@ Pointclouds can be visualized using
 python3 visualize_pcls.py -f $OUTPUT_PATH -p world
 ```
 The parameter p gives a pattern to match to extract the correct ply files from the folder.
+
+### Create data set 
+```
+python3 slice_data.py -f $OUTPUT_PATH -p world -he 0.0 -t 0.005
+```
+The parameter -he gives the height at which the data is sliced. The parameter -t controls the tolerance with which data is extracted (he +- t). This will create a csv file dataset in the output folder.
+
+### Visualize data set
+```
+python3 visualize_dataset.py -f $OUTPUT_PATH/dataset.csv
+```
 
 ### Additional information
 Additional information on the coordinate systems in the HoloLens can be found in the [ResearchApi](https://raw.githubusercontent.com/microsoft/HoloLens2ForCV/main/Docs/ECCV2020-Tutorial/ECCV2020-ResearchMode-Api.pdf).

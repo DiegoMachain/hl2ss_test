@@ -72,12 +72,6 @@ def get_free_points(point, trafo):
     # draw random number uniformly between 0 and 1
     free_distance = distance * np.sqrt(random.uniform(0,1))
     free_distance = np.maximum(0.1, np.minimum(distance - 0.1, free_distance))
-    free_point = [pose[0] + free_distance/distance * vector[0], pose[1] + free_distance/distance * vector[1], pose[2] + free_distance/distance * vector[2]]
-    # print("Pose point: %s" % pose)
-    # print("Point point: %s" % point)
-    # print("free_distance: %s" % free_distance)
-    # print("Vector: %s" % vector)
-    # print("Free point: %s" % free_point)
     points.append(free_point)
     labels.append(0)
 
@@ -120,6 +114,7 @@ if __name__ == '__main__':
 
     # get the min and max of this pointcloud
     min_pcl, max_pcl = get_min_max(pcd)
+    print("PCL min: %s, max: %s" % (min_pcl, max_pcl))
     if (min_pcl < min):
       min = min_pcl
     if (max_pcl > max):
@@ -128,7 +123,8 @@ if __name__ == '__main__':
   # Print out the min and max value (vertical axis is -y, see Research api)
   print("Min vertical: %s, max vertical: %s" % (min, max))
   # biased_height = max - height
-  biased_height = -height
+  # biased_height = -height
+  biased_height = height
   height_min = biased_height + tolerance
   height_max = biased_height - tolerance
   print("Slicing data at height %s with tolerance +-%s: %s to %s" % (biased_height, tolerance, height_min, height_max))
