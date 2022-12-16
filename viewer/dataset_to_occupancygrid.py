@@ -8,7 +8,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def convert_value(x):
-    x = float(x)*2*100
+    x = float(x)*100
     x_int = int(x)
     return x_int
 
