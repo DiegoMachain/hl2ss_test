@@ -30,7 +30,7 @@ def import_csv(path):
                 max_x = float(line[0])
             if float(line[1])>max_y:
                 max_y = float(line[1])
-            means.append(line[2])
+            means.append(line[2])# these two lines must be in an else statement of the if above
             #print(means[i])
             variances.append(line[3])
     return max_x, max_y, origin_x, origin_y, means, variances
