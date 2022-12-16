@@ -7,6 +7,11 @@ import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 
+def convert_value(x):
+    x = float(x)*2*100
+    x_int = int(x)
+    return x_int
+
 def import_csv(path):
     max_x = 0
     max_y = 0
@@ -35,11 +40,11 @@ def write_yaml(path, x, y, means, variances):
         f.write(str(int(y)))
         f.write("\ndata:\n")
         f.write("   - ")
-        f.write(str(means[0]))
+        f.write(str(convert_value(means[0])))
         f.write("\n")
         for index in range(len(means)-1):
             f.write("   - ")
-            f.write(means[index + 1])
+            f.write(str(convert_value(means[index + 1])))
             f.write("\n")
         f.write("\n")
 
@@ -52,11 +57,11 @@ def write_yaml(path, x, y, means, variances):
         f.write(str(int(y)))
         f.write("\ndata:\n")
         f.write("   - ")
-        f.write(str(variances[0]))
+        f.write(str(convert_value(variances[0])))
         f.write("\n")
         for index in range(len(variances)-1):
             f.write("   - ")
-            f.write(variances[index + 1])
+            f.write(str(convert_value(variances[index + 1])))
             f.write("\n")
         f.write("\n")
 
