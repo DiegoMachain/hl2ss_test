@@ -13,6 +13,8 @@ def convert_value(x):
     return x_int
 
 def import_csv(path):
+    origin_x = 0
+    origin_y = 0
     max_x = 0
     max_y = 0
     means = []
@@ -21,6 +23,9 @@ def import_csv(path):
     with open(path, "r") as csvfile:
         reader = csv.reader(csvfile)
         for i, line in enumerate(reader):
+            if i == 0: 
+                origin_x = float(line[0])
+                origin_y = float(line[2]) 
             if float(line[0])>max_x:
                 max_x = float(line[0])
             if float(line[1])>max_y:
@@ -28,9 +33,9 @@ def import_csv(path):
             means.append(line[2])
             #print(means[i])
             variances.append(line[3])
-    return max_x, max_y, means, variances
+    return max_x, max_y, origin_x, origin_y, means, variances
 
-def write_yaml(path, x, y, means, variances):
+def write_yaml(path, x, y, origin_x, origin_y, means, variances):
     with open(path, "w") as f:
         f.write("info:\n")
         f.write("   width:  ")
@@ -38,13 +43,21 @@ def write_yaml(path, x, y, means, variances):
         f.write("\n")
         f.write("   height: ")
         f.write(str(int(y)))
+        f.write("\n")
+        f.write("   origin:\n")
+        f.write("       position:\n")
+        f.write("           x:  ")
+        f.write(str(origin_x))
+        f.write("\n")
+        f.write("           y:  ")
+        f.write(str(origin_y))
         f.write("\ndata:\n")
         f.write("   - ")
-        f.write(str(convert_value(means[0])))
+        f.write(str(convert_value(means[1])))
         f.write("\n")
-        for index in range(len(means)-1):
+        for index in range(len(means)-2):
             f.write("   - ")
-            f.write(str(convert_value(means[index + 1])))
+            f.write(str(convert_value(means[index + 2])))
             f.write("\n")
         f.write("\n")
 
@@ -80,8 +93,8 @@ if __name__ == '__main__':
     path_in = args.file
     path_out = args.output
 
-    width, height, means_array, variances_array = import_csv(path_in)
+    width, height, origin_x, origin_y, means_array, variances_array = import_csv(path_in)
 
-    if  write_yaml(path_out, width, height, means_array, variances_array):
+    if  write_yaml(path_out, width, height, origin_x, origin_y, means_array, variances_array):
         print("ROS messages located at: ")
         print(str(path_out))
