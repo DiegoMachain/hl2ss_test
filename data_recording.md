@@ -40,39 +40,39 @@ mkdir $OUTPUT_PATH/calibration
 
 ### Retrieve the calibration files from the HoloLens
 ```
-python3 pv_extrinsic_calibration.py --host 10.10.10.218 --path $OUTPUT_PATH/calibration
-python3 pv_intrinsics_downloader.py --host 10.10.10.218 --path $OUTPUT_PATH/calibration
-python3 rm_calibration_downloader.py --host 10.10.10.218 --path $OUTPUT_PATH/calibration
+python3 viewer/pv_extrinsic_calibration.py --host 10.10.10.218 --path $OUTPUT_PATH/calibration
+python3 viewer/pv_intrinsics_downloader.py --host 10.10.10.218 --path $OUTPUT_PATH/calibration
+python3 viewer/rm_calibration_downloader.py --host 10.10.10.218 --path $OUTPUT_PATH/calibration
 ```
 
 ### Record data
 ```
-python3 record_data.py -o $OUTPUT_PATH -c $OUTPUT_PATH/calibration
+python3 viewer/record_data.py -o $OUTPUT_PATH -c $OUTPUT_PATH/calibration
 ```
 This will save pointcloud files ("raw_pcd_x.ply") and transformations from the HoloLens to a world coordinate frame ("trafo_x") to the output directory.
 
 ### Transform data
 ```
-python3 transform_to_world_frame.py -f $OUTPUT_PATH
+python3 viewer/transform_to_world_frame.py -f $OUTPUT_PATH
 ```
 This will transform the recorded pointclouds to the world coordinate frame and save them again ("worldpcd_x.ply").
 
 ### Visualize data
 Pointclouds can be visualized using
 ```
-python3 visualize_pcls.py -f $OUTPUT_PATH -p world
+python3 viewer/visualize_pcls.py -f $OUTPUT_PATH -p world
 ```
 The parameter p gives a pattern to match to extract the correct ply files from the folder.
 
 ### Create data set 
 ```
-python3 slice_data.py -f $OUTPUT_PATH -p world -he 0.0 -t 0.005
+python3 viewer/slice_data.py -f $OUTPUT_PATH -p world -he 0.0 -t 0.005
 ```
 The parameter -he gives the height at which the data is sliced. The parameter -t controls the tolerance with which data is extracted (he +- t). This will create a csv file dataset in the output folder.
 
 ### Visualize data set
 ```
-python3 visualize_dataset.py -f $OUTPUT_PATH/dataset.csv
+python3 viewer/visualize_dataset.py -f $OUTPUT_PATH/dataset.csv
 ```
 
 ### Additional information
