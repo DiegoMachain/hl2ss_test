@@ -26,23 +26,27 @@ def import_csv(path):
             if i == 0: 
                 origin_x = float(line[0])
                 origin_y = float(line[2]) 
+            else:
+                means.append(line[2])
+                #print(means[i])
+                variances.append(line[3]) 
             if float(line[0])>max_x:
                 max_x = float(line[0])
             if float(line[1])>max_y:
                 max_y = float(line[1])
-            means.append(line[2])
+            #means.append(line[2])
             #print(means[i])
-            variances.append(line[3])
+            #variances.append(line[3])
     return max_x, max_y, origin_x, origin_y, means, variances
 
 def write_yaml(path, x, y, origin_x, origin_y, means, variances):
     with open(path, "w") as f:
         f.write("info:\n")
         f.write("   width:  ")
-        f.write(str(int(x)))
+        f.write(str(int(x)+1))
         f.write("\n")
         f.write("   height: ")
-        f.write(str(int(y)))
+        f.write(str(int(y)+1))
         f.write("\n")
         f.write("   origin:\n")
         f.write("       position:\n")
