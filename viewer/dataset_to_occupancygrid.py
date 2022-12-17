@@ -34,9 +34,6 @@ def import_csv(path):
                 max_x = float(line[0])
             if float(line[1])>max_y:
                 max_y = float(line[1])
-            #means.append(line[2])
-            #print(means[i])
-            #variances.append(line[3])
     return max_x, max_y, origin_x, origin_y, means, variances
 
 def write_yaml(path, x, y, origin_x, origin_y, means, variances):
