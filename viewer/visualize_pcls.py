@@ -27,8 +27,11 @@ if __name__ == '__main__':
 
     args = argParser.parse_args()
 
+    print("%s*.ply" % (args.folder))
+
     files = glob.glob("%s%s*.ply" % (args.folder, args.pattern))
     files.sort(key=natural_keys)
+    print(files)
 
     c = 0
     step = 1
