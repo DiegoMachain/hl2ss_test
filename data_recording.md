@@ -74,6 +74,11 @@ The parameter -he gives the height at which the data is sliced. The parameter -t
 ```
 python3 viewer/visualize_dataset.py -f $OUTPUT_PATH/dataset.csv
 ```
+### Rotate data set
+in this example the dataset is rotated around the y axis by 5 degrees
+```
+python3 viewer/rotate_dataset.py -f $OUTPUT_PATH/dataset.csv -o $OUTPUT_PATH/dataset_rotated.csv -a -5
+```
 
 ### Additional information
 Additional information on the coordinate systems in the HoloLens can be found in the [ResearchApi](https://raw.githubusercontent.com/microsoft/HoloLens2ForCV/main/Docs/ECCV2020-Tutorial/ECCV2020-ResearchMode-Api.pdf).
