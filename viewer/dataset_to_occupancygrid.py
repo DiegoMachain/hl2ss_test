@@ -7,6 +7,8 @@ import sys
 import pandas as pd
 import matplotlib.pyplot as plt
 
+#script to convert .csv hilbert map to .yaml format nav_msgs/OccupancyGrid ROS message
+
 def convert_value(x):
     x = float(x)*100
     x_int = int(x)

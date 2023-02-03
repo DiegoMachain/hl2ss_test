@@ -8,6 +8,8 @@ import pandas as pd
 import matplotlib.pyplot as plt
 import math
 
+#script used to rotate datasets about the z axis
+
 if __name__ == '__main__':
     argParser = argparse.ArgumentParser()
     argParser.add_argument("-f", "--file", help="path to csv file")
@@ -23,6 +25,7 @@ if __name__ == '__main__':
               vals = row[0].split(",")
               point = [float(vals[0]), float(vals[1])]
 
+                #classic 2D transformation matrix
               newpoint = [(point[0]*math.cos(theta) - point[1]*math.sin(theta)),
                           (point[0]*math.sin(theta) + point[1]*math.cos(theta)),
                           int(vals[-1])]
