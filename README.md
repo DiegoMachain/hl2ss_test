@@ -21,6 +21,7 @@ HoloLens 2 server application for streaming sensor data via TCP. Created to stre
   
 **Additional features**
 
+
 - Download calibration (e.g., camera intrinsics) for the Front Camera and Research Mode sensors (except RM IMU Magnetometer).
 - Optional per-frame pose for the Front Camera and Research Mode sensors streams.
 - Client can configure the bitrate of the H264, HEVC, and AAC encoded streams.
