@@ -1,0 +1,15 @@
+# ninja log v5
+0	405	1680524750125885765	/home/vboxuser/Desktop/Semester_Project/catkin_ws/src/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libmcubes/marchingcubes.o	80c104146fabb755
+5	1234	1680524750958302122	/home/vboxuser/Desktop/Semester_Project/catkin_ws/src/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libmcubes/pywrapper.o	1a94ef33d608cc7f
+2	1499	1680524751170408221	/home/vboxuser/Desktop/Semester_Project/catkin_ws/src/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libmcubes/mcubes.o	59ab99aae55ac6bf
+0	3523	1680524754960303642	/home/vboxuser/Desktop/Semester_Project/catkin_ws/src/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libmesh/triangle_hash.o	73dbd935319bcaf2
+0	4113	1680524759294470851	/home/vboxuser/Desktop/Semester_Project/catkin_ws/src/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libmise/mise.o	7d0adb04c54a3a10
+0	4626	1680524764112879834	/home/vboxuser/Desktop/Semester_Project/catkin_ws/src/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libsimplify/simplify_mesh.o	ead6886884d3fd02
+0	3012	1680524767498322896	/home/vboxuser/Desktop/Semester_Project/catkin_ws/src/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libvoxelize/voxelize.o	86ed6c0095e10c37
+0	431	1680526436767933814	/home/vboxuser/Desktop/Semester_Project/Ditto_ROS/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libmcubes/marchingcubes.o	ee0110b2b0dd0448
+7	1189	1680526437529042327	/home/vboxuser/Desktop/Semester_Project/Ditto_ROS/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libmcubes/pywrapper.o	5a509f5363e6c8c4
+1	1472	1680526437837485302	/home/vboxuser/Desktop/Semester_Project/Ditto_ROS/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libmcubes/mcubes.o	cb93b12b29d8a46e
+0	3464	1680526441510315723	/home/vboxuser/Desktop/Semester_Project/Ditto_ROS/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libmesh/triangle_hash.o	f1c437f3ebe6c89a
+0	3902	1680526445626995667	/home/vboxuser/Desktop/Semester_Project/Ditto_ROS/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libmise/mise.o	71856e264ccca5ef
+0	4416	1680526450243518393	/home/vboxuser/Desktop/Semester_Project/Ditto_ROS/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libsimplify/simplify_mesh.o	5e6a7bfc4e41f00d
+0	2930	1680526453546393214	/home/vboxuser/Desktop/Semester_Project/Ditto_ROS/hl2ss_test/build/temp.linux-x86_64-cpython-38/src/third_party/ConvONets/utils/libvoxelize/voxelize.o	43196641b7f00678
