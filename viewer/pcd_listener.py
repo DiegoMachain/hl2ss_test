@@ -2,19 +2,46 @@
 #Example of listener of point cloud
 
 import rospy
+from std_msgs.msg import Float64MultiArray
 from sensor_msgs.msg import PointCloud2
 import sensor_msgs.point_cloud2 as pc2
 import ros_numpy
 import open3d as o3d
 import numpy as np
+import copy
 
 import Ditto_pipeline
 
+#Import the packages for the model
+import torch
+from hydra.experimental import initialize, initialize_config_module, initialize_config_dir, compose
+from omegaconf import OmegaConf
+import hydra
+from src.third_party.ConvONets.conv_onet.generation_two_stage import Generator3D
 
-def readPCD(cloud_npy):
-    
+#Function to simulate HoloLens receiving the message from Ditto
+def callback_hololens(data):
+    rospy.loginfo("Hololens Data = ", data.data)
 
-    return o3dpc
+def getCoordinateSystem(size):
+    points = [[0, 0, 0], [size, 0, 0], [0, size, 0], [0, 0, size]]
+    lines = [[0, 1], [0, 2], [0, 3]]
+    colors = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    line_set = o3d.geometry.LineSet()
+    line_set.points = o3d.utility.Vector3dVector(points)
+    line_set.lines = o3d.utility.Vector2iVector(lines)
+    line_set.colors = o3d.utility.Vector3dVector(colors)
+    return line_set
+
+#Get rotation matrix
+def vector_to_rotation(vector):
+    z = np.array(vector)
+    z = z / np.linalg.norm(z)
+    x = np.array([1, 0, 0])
+    x = x - z*(x.dot(z)/z.dot(z))
+    x = x / np.linalg.norm(x)
+    y = np.cross(z, x)
+    return np.c_[x, y, z]
 
 class DittoManager():
 
@@ -25,8 +52,51 @@ class DittoManager():
 
         self.scale = 0.
         self.center = 0.
+        self.joint = None
+        self.pivot = None
+        self.data_to_send = Float64MultiArray()
+
+        self.count = 0
+
+        #Publisher initialization
+        #self.pub = rospy.Publisher("parameters", Float64MultiArray, queue_size = 10)
+
+        #Initialize ditto model
+        with initialize(config_path='../configs/'):
+            self.config = compose(
+                config_name='config',
+                overrides=[
+                    'experiment=Ditto_s2m.yaml',
+                ], return_hydra_config=True)
+        self.config.datamodule.opt.train.data_dir = '../data/'
+        self.config.datamodule.opt.val.data_dir = '../data/'
+        self.config.datamodule.opt.test.data_dir = '../data/'
+
+        #Load the model
+        self.model = hydra.utils.instantiate(self.config.model)
+        ckpt = torch.load('../data/Ditto_s2m.ckpt', map_location=torch.device('cpu'))
+        self.device = torch.device('cpu')
+        self.model.load_state_dict(ckpt['state_dict'], strict=True)
+        self.model = self.model.eval().to(self.device)
+
+        self.generator = Generator3D(
+            self.model.model,
+            device=self.device,
+            threshold=0.4,
+            seg_threshold=0.5,
+            input_type='pointcloud',
+            refinement_step=0,
+            padding=0.1,
+            resolution0=32
+        )
+
 
     def appendSRC(self, pcd):
+        #Save one pcd just for visualization of the transformation back
+        if self.count == 0:
+            self.count = 1
+            self.visPcd = copy.deepcopy(pcd)
+
         self.src_pcd_list.append(pcd)
 
         #Append for the scaling of the point clouds
@@ -34,8 +104,8 @@ class DittoManager():
         pc_idx = np.random.randint(0, pc.shape[0], size=(2048, ))
         pc = pc[pc_idx]
         self.src_pc_list.append(pc)
-        
 
+        
     def appendDST(self, pcd):
         self.dst_pcd_list.append(pcd)
 
@@ -73,7 +143,89 @@ class DittoManager():
 
     def callDitto(self):
 
-        Ditto_pipeline.Ditto(self.src_pcd_list, self.dst_pcd_list)
+        self.joint, self.pivot = Ditto_pipeline.Ditto(self.src_pcd_list, self.dst_pcd_list, self.model, self.generator, self.device)
+        
+        #horizontal stacking the arrays
+        self.data_to_send.data = np.hstack((self.joint, self.pivot))
+
+        return self.data_to_send
+    
+    def publish(self):
+
+        #Publish the results of Ditto
+        print("---Publishing to hololens---")
+
+        self.pub.publish(self.data_to_send)
+
+        print("--Publishing finished--")
+
+
+    #Function to reset the manager 
+    def reset(self):
+        self.src_pcd_list = []
+        self.src_pc_list = []
+        self.dst_pcd_list = []
+
+        self.scale = 0.
+        self.center = 0.
+
+    #Transform the results of Ditto back to world coordinates
+    def transformBack(self):
+        #Convert the pivot point
+        sphere = o3d.geometry.TriangleMesh.create_sphere(radius = .05)
+        sphere.compute_vertex_normals()
+
+        pivot = self.data_to_send.data[3:]
+        vec = self.data_to_send.data[:3]
+
+
+        #Transform back 
+        center_transform = np.eye(4)
+        center_transform[:3, 3] = pivot
+        #Translate sphere to pivot point to represent it
+        sphere.transform(center_transform)
+
+        #Change the orientation of axis 
+        R = np.array([[0,1,0],[0,0,1],[1,0,0]])
+        sphere.rotate(R, center=(0, 0, 0))
+        sphere.scale(self.scale, np.zeros((3, 1)))
+
+        center_transform_2 = np.eye(4)
+        center_transform_2[:3, 3] = self.center
+        #Translate back
+        sphere.transform(center_transform_2)
+
+        #Show the results
+        ref_frame = getCoordinateSystem(1)
+        vec_len = self.scale
+
+        #Create the vector 
+        arrow = o3d.geometry.TriangleMesh.create_arrow(
+            cone_height = 0.2 * vec_len,
+            cone_radius = 0.06 * vec_len,
+            cylinder_height = 0.8 * vec_len,
+            cylinder_radius = 0.04 * vec_len
+        )
+
+
+
+        rot_mat = vector_to_rotation(vec)
+
+
+        arrow.compute_vertex_normals()
+
+        arrow.rotate(rot_mat, center = (0,0,0))
+
+        #arrow.rotate(np.asarray(rot_mat), center = (0,0,0))
+
+        arrow.transform(center_transform)
+        arrow.rotate(R, center = (0,0,0))
+        arrow.scale(self.scale, np.zeros((3,1)))
+        arrow.transform(center_transform_2)
+
+        o3d.visualization.draw_geometries([self.visPcd, sphere, ref_frame, arrow])
+        
+
 
 
 
@@ -109,16 +261,29 @@ def callback(data):
         ditto.transformPCDDST()
 
         #Call Ditto
-        ditto.callDitto()
+        data_to_send = ditto.callDitto()
+
+        #Transform the pivot back
+        ditto.transformBack()
+
+        #Publish the results of Ditto
+        #ditto.publish()
+        pub.publish(data_to_send)
 
 
-    print("Point cloud = ", np.asarray(o3dpc.points))
+
+        ditto.reset()
 
 
-#Initiate DittoManager
+#Initialize DittoManager
 ditto = DittoManager()
 
+print("---Ditto initialized---")
+
 rospy.init_node('listener', anonymous=True)
+
+pub = rospy.Publisher("parameters", Float64MultiArray, queue_size = 10)
+
 
 rospy.Subscriber("point_cloud2", PointCloud2, callback)
 

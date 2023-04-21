@@ -28,10 +28,10 @@ def pick_points(pcd):
     )
     print("   Press [shift + right click] to undo point picking")
     print("2) After picking points, press 'Q' to close the window")
-    vis = o3d.visualization.VisualizerWithEditing()
-    vis.create_window()
-    vis.add_geometry(pcd)
-    vis.run()  # user picks points
-    vis.destroy_window()
+    vis_2 = o3d.visualization.VisualizerWithEditing()
+    vis_2.create_window()
+    vis_2.add_geometry(pcd)
+    vis_2.run()  # user picks points
+    vis_2.destroy_window()
     print("")
-    return vis.get_picked_points()
+    return vis_2.get_picked_points()

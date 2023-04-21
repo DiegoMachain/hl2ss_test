@@ -14,14 +14,6 @@ import numpy as np
 from PIL import Image
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
-
-#Import the packages for the model
-import torch
-from hydra.experimental import initialize, initialize_config_module, initialize_config_dir, compose
-from omegaconf import OmegaConf
-import hydra
-
-from src.third_party.ConvONets.conv_onet.generation_two_stage import Generator3D
 from src.utils.misc import sample_point_cloud
 
 
@@ -187,7 +179,7 @@ def getCoordinateSystem(size):
     return line_set
 
 
-def Ditto(src_pcd_list, dst_pcd_list):
+def Ditto(src_pcd_list, dst_pcd_list, model, generator, device):
 
     #Downsample the pointclouds
     src_pcd = sum_downsample_points(src_pcd_list, 0.005, 10, 2)
@@ -195,50 +187,7 @@ def Ditto(src_pcd_list, dst_pcd_list):
 
     # visualize crop results
     # tune crop box to get better isolated objects
-    
-    #fig = plt.figure()
-    #ax = fig.add_subplot(1, 2, 1, projection='3d')
-    #plot_3d_point_cloud(*np.asarray(src_pcd.points).T,
-    #                    axis=ax,
-    #                    azim=30,
-    #                    elev=30,
-    #                    lim=[(-0.5, 0.5)] * 3)
 
-    #plt.show()
-
-
-    with initialize(config_path='../configs/'):
-        config = compose(
-            config_name='config',
-            overrides=[
-                'experiment=Ditto_s2m.yaml',
-            ], return_hydra_config=True)
-    config.datamodule.opt.train.data_dir = '../data/'
-    config.datamodule.opt.val.data_dir = '../data/'
-    config.datamodule.opt.test.data_dir = '../data/'
-
-    #Load the model
-    model = hydra.utils.instantiate(config.model)
-    #ckpt = torch.load('../data/Ditto_s2m.ckpt')
-    #device = torch.device(0)
-    ckpt = torch.load('../data/Ditto_s2m.ckpt', map_location=torch.device('cpu'))
-    device = torch.device('cpu')
-    model.load_state_dict(ckpt['state_dict'], strict=True)
-    model = model.eval().to(device)
-
-
-    #Load the generator for mesh
-
-    generator = Generator3D(
-        model.model,
-        device=device,
-        threshold=0.4,
-        seg_threshold=0.5,
-        input_type='pointcloud',
-        refinement_step=0,
-        padding=0.1,
-        resolution0=32
-    )
 
     pc_start = np.asarray(src_pcd.points)
     pc_end = np.asarray(dst_pcd.points)
@@ -317,5 +266,9 @@ def Ditto(src_pcd_list, dst_pcd_list):
     add_r_joint_to_scene(scene_2, joint_axis_pred, pivot_point_pred, 1.0, recenter=True)
 
     scene.show()
-
     scene_2.show()
+
+    #We still need to return to the previous space
+    
+    return joint_axis_pred, pivot_point_pred
+

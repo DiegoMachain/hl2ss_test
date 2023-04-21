@@ -22,7 +22,7 @@ import rospy
 # host = "192.168.1.7"
 host = "10.10.10.218"
 
-calibration_path = './calibration'
+calibration_path = 'output/calibration'
 
 # Camera parameters
 focus = 1000
@@ -47,6 +47,19 @@ max_depth = 3.0
 
 #------------------------------------------------------------------------------
 
+#Function to draw the reference frame
+def getCoordinateSystem(size):
+    points = [[0, 0, 0], [size, 0, 0], [0, size, 0], [0, 0, size]]
+    lines = [[0, 1], [0, 2], [0, 3]]
+    colors = [[1, 0, 0], [0, 1, 0], [0, 0, 1]]
+    line_set = o3d.geometry.LineSet()
+    line_set.points = o3d.utility.Vector3dVector(points)
+    line_set.lines = o3d.utility.Vector2iVector(lines)
+    line_set.colors = o3d.utility.Vector3dVector(colors)
+    return line_set
+
+line_set = getCoordinateSystem(1)
+
 if __name__ == '__main__':
     enable = True
 
@@ -65,6 +78,8 @@ if __name__ == '__main__':
 
     hl2ss_3dcv.pv_optimize_for_cv(host, focus, exposure_mode, exposure, iso_speed_mode, iso_speed_value, white_balance)
 
+
+    print("Calibration path = ", calibration_path)
     calibration_pv = hl2ss_3dcv.get_calibration_pv(host, hl2ss.StreamPort.PERSONAL_VIDEO, calibration_path, focus, width, height, framerate, True)
     calibration_lt = hl2ss.download_calibration_rm_depth_longthrow(host, hl2ss.StreamPort.RM_DEPTH_LONGTHROW)
     # calibration_lt = hl2ss_3dcv.get_calibration_rm(host, hl2ss.StreamPort.RM_DEPTH_LONGTHROW, calibration_path)
@@ -122,6 +137,8 @@ if __name__ == '__main__':
             first_pcd = False
             pcd = pcd_tmp
             vis.add_geometry(pcd)
+
+            vis.add_geometry(line_set)
         else:
             pcd.points = pcd_tmp.points
             pcd.colors = pcd_tmp.colors

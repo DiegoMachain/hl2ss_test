@@ -28,37 +28,11 @@ def getCoordinateSystem(size):
 #Use the pose 
 pose = np.array([0.11, -0.41, -0.76, 0.839,-0.047, 0.246, 0.482])
 
-crop = False
-
-if not crop:
-    bbox1 = np.asarray([[ 0.24046951, -0.39082012, -0.79296131],
- [ 0.07598042, -0.41336942, -0.58375702],
- [ 0.40458919, -0.41427912, -0.32223578],
- [ 0.55760958, -0.39119684, -0.54991687],
- [ 0.62070919, -0.24465359, -0.68997762],
- [ 0.37740293, -0.24353933, -0.88624749]])
-    print(bbox1)
-    bbox1 = o3d.utility.Vector3dVector(bbox1)
-    bbox1 = o3d.geometry.OrientedBoundingBox.create_from_points(bbox1)
-
-    bbox2 = np.asarray([[ 0.23811494, -0.3940958,  -0.7946167 ],
- [ 0.0722026,  -0.41252023, -0.5764407 ],
- [ 0.40607115, -0.41456073, -0.31901026],
- [ 0.55268662, -0.39123619, -0.54049384],
- [ 0.57272911, -0.17143627, -0.59915692],
- [ 0.28528508, -0.17633637, -0.82667763]])
-    
-    bbox2 = o3d.utility.Vector3dVector(bbox2)
-
-    bbox2 = o3d.geometry.OrientedBoundingBox.create_from_points(bbox2)
-else: 
-    bbox1 = False
-    bbox2 = False
-
 
 #Initiate the nodes
 
 rospy.init_node("create_cloud_xyzrgb")
+
 pub = rospy.Publisher("point_cloud2", PointCloud2, queue_size=2)
 
 
@@ -70,12 +44,15 @@ fields = [PointField('x', 0, PointField.FLOAT32, 1),
           #PointField('rgba', 12, PointField.UINT32, 1),
           ]
 
+#pub = rospy.Publisher("point_cloud2", PointCloud2, queue_size=2)
+
 header = Header()
 header.frame_id = "before"
 
 #Path for the examples
 path = "/home/vboxuser/Desktop/Semester_Project/Ditto_ROS/hl2ss_test/viewer/output/run1/"
 
+bbox = False
 
 #Send the before and after the interaction and crop them
 
@@ -85,29 +62,41 @@ for k in range(3):
     
     pcd = o3d.io.read_point_cloud("%sworldpcd_%s.ply" %(path, k))
     #Example rotating the mesh
+    #T = np.eye(4)
+    #T[:3, :3] = pcd.get_rotation_matrix_from_xyz((0, 0, 0))
+    #T[0,3] = -pose[0]
+    #T[1,3] = -pose[1]
+    #T[2,3] = -pose[2] 
 
-    if not bbox1:
+    #Before transforming
+    #o3d.visualization.draw_geometries([pcd, line_set])
+    #pcd.transform(T)
+
+    #After transforming
+    #o3d.visualization.draw_geometries([pcd, line_set])
+
+    if not bbox:
         points = crop_pcl.pick_points(pcd)
         picked_points = np.asarray(pcd.points)[points]
         picked_points = o3d.utility.Vector3dVector(picked_points)
-        bbox1 = o3d.geometry.OrientedBoundingBox.create_from_points(picked_points)
-        print("First points = ", np.asarray(picked_points))
+        bbox = o3d.geometry.OrientedBoundingBox.create_from_points(picked_points)
         #bbox = o3d.geometry.AxisAlignedBoundingBox.create_from_points(picked_points)
 
     #Draw a box to cut the object we want
-    pcd = pcd.crop(bbox1)
+    pcd_2 = pcd.crop(bbox)
 
     #Bounding box
-    o3d.visualization.draw_geometries([pcd, bbox1])
+    o3d.visualization.draw_geometries([pcd_2, bbox])
 
 
     #_ = crop_pcl.pick_points(pcd_2)
 
-    pc2 = point_cloud2.create_cloud(header, fields, np.asarray(pcd.points))
+    pc2 = point_cloud2.create_cloud(header, fields, np.asarray(pcd_2.points))
 
     pc2.header.stamp = rospy.Time.now()
     pub.publish(pc2)
 
+bbox = False
 
 #Send the before and after the interaction and crop them
 header = Header()
@@ -117,23 +106,21 @@ for k in range(70, 73):
     pcd = o3d.io.read_point_cloud("%sworldpcd_%s.ply" %(path, k))
 
     #Crop the point cloud
-    if not bbox2:
+    if not bbox:
         points = crop_pcl.pick_points(pcd)
         picked_points = np.asarray(pcd.points)[points]
         picked_points = o3d.utility.Vector3dVector(picked_points)
-
-        print("Second points = ", np.asarray(picked_points))
-        bbox2 = o3d.geometry.OrientedBoundingBox.create_from_points(picked_points)
+        bbox = o3d.geometry.OrientedBoundingBox.create_from_points(picked_points)
         #bbox = o3d.geometry.AxisAlignedBoundingBox.create_from_points(picked_points)
 
     #Crop the pointcloud with the box
-    pcd = pcd.crop(bbox2)
+    pcd_2 = pcd.crop(bbox)
     #_ = crop_pcl.pick_points(pcd_2)
 
     #Bounding box
-    o3d.visualization.draw_geometries([pcd, bbox2])
+    o3d.visualization.draw_geometries([pcd_2, bbox])
 
-    pc2 = point_cloud2.create_cloud(header, fields, np.asarray(pcd.points))
+    pc2 = point_cloud2.create_cloud(header, fields, np.asarray(pcd_2.points))
 
     pc2.header.stamp = rospy.Time.now()
     pub.publish(pc2)
@@ -143,7 +130,7 @@ for k in range(70, 73):
 header = Header()
 header.frame_id = "end"
 
-pc2 = point_cloud2.create_cloud(header, fields, np.asarray(pcd.points))
+pc2 = point_cloud2.create_cloud(header, fields, np.asarray(pcd_2.points))
 
 pc2.header.stamp = rospy.Time.now()
 pub.publish(pc2)
