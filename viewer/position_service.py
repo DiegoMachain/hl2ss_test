@@ -10,19 +10,16 @@ from unity_robotics_demo_msgs.srv import PositionService, PositionServiceRespons
 
 
 def new_position(req):
-    print("Request: \n{}".format(req.input))
-    req.input.rot_x = random.uniform(-1.0, 1.0)
-    req.input.rot_y = random.uniform(-1.0, 1.0)
-    req.input.rot_z = random.uniform(-1.0, 1.0)
+    
+    req.input.rot_x = random.uniform(-3.0, 3.0)
+    req.input.rot_y = random.uniform(-1.5, 1.5)
+    req.input.rot_z = random.uniform(-3.0, 3.0)
 
     #req.input.pos_x = random.uniform(-1.0, 1.0)
     #req.input.pos_y = random.uniform(-1.0, 1.0)
     #req.input.pos_z = random.uniform(-1.0, 1.0)
 
-    pivot = np.array([-0.06263177,  0.05984291, -0.16308576])
-    vec = np.array([-0.61942077, -0.7850084,  -0.00417794])
-    scale = 0.6441019214689732
-    center = np.array([ 0.33128244, -0.33428816, -0.59747717])
+    print("Request: \n{}".format(req.input))
     
 
     return PositionServiceResponse(req.input)

@@ -9,6 +9,7 @@ import ros_numpy
 import open3d as o3d
 import numpy as np
 import copy
+import Ditto_transformation
 
 import Ditto_pipeline
 
@@ -18,6 +19,9 @@ from hydra.experimental import initialize, initialize_config_module, initialize_
 from omegaconf import OmegaConf
 import hydra
 from src.third_party.ConvONets.conv_onet.generation_two_stage import Generator3D
+
+from unity_robotics_demo_msgs.srv import PositionService, PositionServiceResponse
+
 
 #Function to simulate HoloLens receiving the message from Ditto
 def callback_hololens(data):
@@ -55,6 +59,7 @@ class DittoManager():
         self.joint = None
         self.pivot = None
         self.data_to_send = Float64MultiArray()
+        self.sendFlag = False
 
         self.count = 0
 
@@ -154,6 +159,7 @@ class DittoManager():
 
         #Publish the results of Ditto
         print("---Publishing to hololens---")
+        #Call the position service
 
         self.pub.publish(self.data_to_send)
 
@@ -178,56 +184,39 @@ class DittoManager():
         pivot = self.data_to_send.data[3:]
         vec = self.data_to_send.data[:3]
 
+        scale = self.scale
+        center = self.center
 
-        #Transform back 
-        center_transform = np.eye(4)
-        center_transform[:3, 3] = pivot
-        #Translate sphere to pivot point to represent it
-        sphere.transform(center_transform)
-
-        #Change the orientation of axis 
-        R = np.array([[0,1,0],[0,0,1],[1,0,0]])
-        sphere.rotate(R, center=(0, 0, 0))
-        sphere.scale(self.scale, np.zeros((3, 1)))
-
-        center_transform_2 = np.eye(4)
-        center_transform_2[:3, 3] = self.center
-        #Translate back
-        sphere.transform(center_transform_2)
-
-        #Show the results
-        ref_frame = getCoordinateSystem(1)
-        vec_len = self.scale
-
-        #Create the vector 
-        arrow = o3d.geometry.TriangleMesh.create_arrow(
-            cone_height = 0.2 * vec_len,
-            cone_radius = 0.06 * vec_len,
-            cylinder_height = 0.8 * vec_len,
-            cylinder_radius = 0.04 * vec_len
-        )
-
-
-
-        rot_mat = vector_to_rotation(vec)
-
-
-        arrow.compute_vertex_normals()
-
-        arrow.rotate(rot_mat, center = (0,0,0))
-
-        #arrow.rotate(np.asarray(rot_mat), center = (0,0,0))
-
-        arrow.transform(center_transform)
-        arrow.rotate(R, center = (0,0,0))
-        arrow.scale(self.scale, np.zeros((3,1)))
-        arrow.transform(center_transform_2)
-
-        o3d.visualization.draw_geometries([self.visPcd, sphere, ref_frame, arrow])
+        arrow_vec, pivot_vec, sphere, ref_frame, dittoLine = Ditto_transformation.transformDitto(pivot, vec,scale,center, sphere = True, refframe = True)
         
+        self.data_to_send.data[3:] = pivot_vec.reshape((3,))
+        self.data_to_send.data[:3] = arrow_vec.reshape((3,))
+        
+        o3d.visualization.draw_geometries([self.visPcd, sphere, ref_frame, dittoLine])
+        self.sendFlag = True
+    #
+    def new_position(self, req):
+        #Function to modify the position and orientation of the arrow
 
+        if self.sendFlag:
+            print("Request: \n{}".format(req.input))
+            print("--- Rotating the arrow ---")
+            print("Data from Ditto = ", self.data_to_send.data)
+            #Necesito la pose del QR
 
+            req.input.rot_x = self.data_to_send.data[3]
+            req.input.rot_y = self.data_to_send.data[4]
+            req.input.rot_z = self.data_to_send.data[5]
 
+            req.input.pos_x = self.data_to_send.data[0]
+            req.input.pos_y = self.data_to_send.data[1]
+            req.input.pos_z = self.data_to_send.data[2]
+
+            #req.input.pos_x = .07
+            #req.input.pos_y = .07
+            #req.input.pos_z = .07
+
+        return PositionServiceResponse(req.input)
 
 def callback(data):
 
@@ -267,10 +256,7 @@ def callback(data):
         ditto.transformBack()
 
         #Publish the results of Ditto
-        #ditto.publish()
         pub.publish(data_to_send)
-
-
 
         ditto.reset()
 
@@ -282,9 +268,13 @@ print("---Ditto initialized---")
 
 rospy.init_node('listener', anonymous=True)
 
+#Get the state of the HoloLens buttons
 pub = rospy.Publisher("parameters", Float64MultiArray, queue_size = 10)
 
+#Start the service to change the position of the axis from Ditto on the HoloLens
+s = rospy.Service('pos_srv', PositionService, ditto.new_position)
 
+#Subscriber to hear the data from hl2ss
 rospy.Subscriber("point_cloud2", PointCloud2, callback)
 
 rospy.spin()

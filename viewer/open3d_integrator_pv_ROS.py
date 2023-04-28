@@ -18,7 +18,7 @@ import rospy
 import crop_pcl
 import numpy as np
 import sys
-
+import time
 
 from sensor_msgs import point_cloud2
 from sensor_msgs.msg import PointCloud2, PointField
@@ -51,7 +51,11 @@ class controler():
         self.srcCont = 0 #Before interaction
         self.dstCont = 0 #After 
         self.state = None
+        self.stopBbox = False
+        self.numPCD = 10 #Number of point clouds to send to Ditto
+        self.sendData = False #Flag to see if we send data to ditto or we wait
         print("Init")
+        
     def call_state(self, data):
 
         self.state = data
@@ -163,89 +167,128 @@ def callback(data):
             pcd_tmp = volume.extract_point_cloud()
 
 
-            if (control.first_pcd):
-                control.first_pcd = False
-
-                control.pcd = pcd_tmp
-                
-                #Flag to create bounding box
-                if not control.bbox:
-                    points = crop_pcl.pick_points(control.pcd)
-                    picked_points = np.asarray(control.pcd.points)[points]
-                    picked_points = o3d.utility.Vector3dVector(picked_points)
-                    control.bbox = o3d.geometry.OrientedBoundingBox.create_from_points(picked_points)
-                    #bbox = o3d.geometry.AxisAlignedBoundingBox.create_from_points(picked_points)
-
-                print("Bounding box = ", control.bbox)
-                control.pcd = control.pcd.crop(control.bbox)
-
-                #Transformation matrix 
-            
-                if data.pos_x != 0.:
-                    T = np.eye(4)
-                    T[:3, :3] = control.pcd.get_rotation_matrix_from_xyz((0, 0, 0))
-                    T[0,3] = -data.pos_x
-                    T[1,3] = -data.pos_y
-                    T[2,3] = -data.pos_z
-
-                    #Translate the mesh with the T matrix
-                    control.pcd = control.pcd.transform(T)
-
-                control.vis = o3d.visualization.Visualizer()
-                control.vis.create_window()
-                control.vis.add_geometry(control.pcd)
-                control.vis.add_geometry(line_set)
-            else:
-
-                #crop pcd_tmp
-                pcd_tmp = pcd_tmp.crop(control.bbox)
-
-                control.pcd.points = pcd_tmp.points
-                control.pcd.colors = pcd_tmp.colors
-                
-                if data.pos_x != 0.:
-                    T = np.eye(4)
-                    T[:3, :3] = control.pcd.get_rotation_matrix_from_xyz((0, 0, 0))
-                    T[0,3] = -data.pos_x
-                    T[1,3] = -data.pos_y
-                    T[2,3] = -data.pos_z
-
-                    #Translate the mesh with the T matrix
-                    control.pcd = control.pcd.transform(T)
-
-                #pcd = pcd.crop(bbox)
-                control.vis.update_geometry(control.pcd)
-
-            control.vis.poll_events()
-            control.vis.update_renderer()
-
+            #Add another button to start bbox, decouple bbox and QR scanning
+            #Start scanning then couple of the main
+        
             #Publish the point clouds
-
             #It saves ten point clouds
+
             if control.state != None:
-                if control.state.state == 0. and control.srcCont < 10:
+                # control == 5 is equal to starting the Bbox scanning
+
+                print("State == ", control.state.state)
+                if control.state.state == 5.:
+                    
+                    #sleep for a second
+                    time.sleep(1)
+                    #Create the bounding box
+                    control.first_pcd = False
+                    control.pcd = pcd_tmp
+                    
+                    #Flag to create bounding box
+                    if not control.bbox:
+                        points = crop_pcl.pick_points(control.pcd)
+                        picked_points = np.asarray(control.pcd.points)[points]
+                        picked_points = o3d.utility.Vector3dVector(picked_points)
+                        control.bbox = o3d.geometry.OrientedBoundingBox.create_from_points(picked_points)
+                        #bbox = o3d.geometry.AxisAlignedBoundingBox.create_from_points(picked_points)
+
+                    print("Bounding box = ", control.bbox)
+                    control.pcd = control.pcd.crop(control.bbox)
+
+                    #Transformation matrix 
+                
+                    if data.pos_x != 0.:
+                        T = np.eye(4)
+                        T[:3, :3] = control.pcd.get_rotation_matrix_from_xyz((0, 0, 0))
+                        T[0,3] = -data.pos_x
+                        T[1,3] = -data.pos_y
+                        T[2,3] = -data.pos_z
+
+                        #Translate the mesh with the T matrix
+                        control.pcd = control.pcd.transform(T)
+
+                    control.vis = o3d.visualization.Visualizer()
+                    control.vis.create_window()
+                    control.vis.add_geometry(control.pcd)
+                    control.vis.add_geometry(line_set)
+
+                #Stop the scanning to obtain the bounding box
+                elif control.state.state == 6.:
+                    print("Stop bbox scanning")
+                    control.stopBbox = True
+
+
+                #control == 0 Start the scanning for the
+                elif control.state.state == 0. and control.srcCont < control.numPCD:
                     control.srcCont += 1
                     header.frame_id = "before"
+                    control.sendData = True
+                    print("---Start first interaction---")
 
-                    print("before")
+                # control == 1 stop the first interaction
+                elif control.state.state == 1. and control.srcCont < control.numPCD:
+                    #This enters just once
+                    print("---Stop first interaction---")
+                    control.sendData == False
+                
 
-                elif control.state.state == 1. and control.dstCont < 10:
+                # control == 2 is equal to starting the the scann for after interaction
+                elif control.state.state == 2. and control.dstCont < control.numPCD:
                     control.dstCont += 1
                     header.frame_id = "after"
+                    control.sendData = True
+                    print("---Start second interaction---")
 
-                    print("after")
-                elif control.state.state == 2.:
+                # control == 3 stopping the scan after the interaction
+                elif control.state.state == 3. and control.dstCont < control.numPCD:
+                    print("---Stop second interaction---")
+                    control.dstCont == control.numPCD
+                    control.sendData = False
+                
+                # control == 2 end of the process and start Ditto
+                elif control.state.state == 4.:
 
-                    print("end")
+                    print("--Send data to Ditto---")
                     header.frame_id = "end"
 
+                    control.sendData = True
                     control.srcCont = 0
                     control.dstCont = 0
+                    control.state = None
+                #control == 7 stop all the process and don't send data
+                elif control.state.state == 7.:
+                    print("--Stop all process---")
+                    control.sendData = False
 
-                pc2 = point_cloud2.create_cloud(header, fields, np.asarray(control.pcd.points))
-                pc2.header.stamp = rospy.Time.now()
-                pub.publish(pc2)            
+                #don't publish until the bounding box has been created
+                if control.stopBbox and control.sendData:
+                    #
+                    #crop pcd_tmp
+                    pcd_tmp = pcd_tmp.crop(control.bbox)
 
+                    control.pcd.points = pcd_tmp.points
+                    control.pcd.colors = pcd_tmp.colors
+                    
+                    if data.pos_x != 0.:
+                        T = np.eye(4)
+                        T[:3, :3] = control.pcd.get_rotation_matrix_from_xyz((0, 0, 0))
+                        T[0,3] = -data.pos_x
+                        T[1,3] = -data.pos_y
+                        T[2,3] = -data.pos_z
+
+                        #Translate the mesh with the T matrix
+                        control.pcd = control.pcd.transform(T)
+
+                    #pcd = pcd.crop(bbox)
+                    control.vis.update_geometry(control.pcd)
+
+                    #Publish the point cloud
+                    pc2 = point_cloud2.create_cloud(header, fields, np.asarray(control.pcd.points))
+                    pc2.header.stamp = rospy.Time.now()
+                    pub.publish(pc2)  
+                control.vis.poll_events()
+                control.vis.update_renderer()          
 
             #Prepare the sending to Ditto
 
@@ -254,8 +297,8 @@ def callback(data):
 
 
 rospy.init_node('listener', anonymous=True)
-rospy.Subscriber("pos_rot", PosRot, callback)
-rospy.Subscriber("state", State, control.call_state)
+rospy.Subscriber("pos_rot", PosRot, callback) #pose of the QR code
+rospy.Subscriber("state", State, control.call_state) 
 
 #We want to use control.pcd to send to ditto
 pub = rospy.Publisher("point_cloud2", PointCloud2, queue_size=2)
