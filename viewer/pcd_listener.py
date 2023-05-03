@@ -21,7 +21,7 @@ import hydra
 from src.third_party.ConvONets.conv_onet.generation_two_stage import Generator3D
 
 from unity_robotics_demo_msgs.srv import PositionService, PositionServiceResponse
-
+from robotics_demo. msg import PosRot
 
 #Function to simulate HoloLens receiving the message from Ditto
 def callback_hololens(data):
@@ -165,6 +165,16 @@ class DittoManager():
 
         print("--Publishing finished--")
 
+    def receiveQR(self, data):
+        self.pos_x = data.pos_x
+        self.pos_y = data.pos_y
+        self.pos_z = data.pos_z
+
+        self.rot_x = data.rot_x
+        self.rot_y = data.rot_y
+        self.rot_z = data.rot_z
+
+
 
     #Function to reset the manager 
     def reset(self):
@@ -203,14 +213,15 @@ class DittoManager():
             print("--- Rotating the arrow ---")
             print("Data from Ditto = ", self.data_to_send.data)
             #Necesito la pose del QR
+            print("QR pose = ", self.pos_x)
 
             req.input.rot_x = self.data_to_send.data[3]
             req.input.rot_y = self.data_to_send.data[4]
             req.input.rot_z = self.data_to_send.data[5]
 
-            req.input.pos_x = self.data_to_send.data[0]
-            req.input.pos_y = self.data_to_send.data[1]
-            req.input.pos_z = self.data_to_send.data[2]
+            req.input.pos_x = self.data_to_send.data[0] + self.pos_x
+            req.input.pos_y = self.data_to_send.data[1] + self.pos_y
+            req.input.pos_z = self.data_to_send.data[2] + self.pos_z
 
             #req.input.pos_x = .07
             #req.input.pos_y = .07
@@ -255,8 +266,6 @@ def callback(data):
         #Transform the pivot back
         ditto.transformBack()
 
-        #Publish the results of Ditto
-        pub.publish(data_to_send)
 
         ditto.reset()
 
@@ -268,13 +277,12 @@ print("---Ditto initialized---")
 
 rospy.init_node('listener', anonymous=True)
 
-#Get the state of the HoloLens buttons
-pub = rospy.Publisher("parameters", Float64MultiArray, queue_size = 10)
-
 #Start the service to change the position of the axis from Ditto on the HoloLens
 s = rospy.Service('pos_srv', PositionService, ditto.new_position)
 
 #Subscriber to hear the data from hl2ss
 rospy.Subscriber("point_cloud2", PointCloud2, callback)
+
+rospy.Subscriber("pos_rot", PosRot, ditto.receiveQR)
 
 rospy.spin()

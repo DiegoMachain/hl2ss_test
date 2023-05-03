@@ -15,9 +15,9 @@ def new_position(req):
     req.input.rot_y = random.uniform(-1.5, 1.5)
     req.input.rot_z = random.uniform(-3.0, 3.0)
 
-    #req.input.pos_x = random.uniform(-1.0, 1.0)
-    #req.input.pos_y = random.uniform(-1.0, 1.0)
-    #req.input.pos_z = random.uniform(-1.0, 1.0)
+    req.input.pos_x = random.uniform(-1, 1)
+    req.input.pos_y = random.uniform(-1, 1)
+    req.input.pos_z = random.uniform(-1, 1)
 
     print("Request: \n{}".format(req.input))
     

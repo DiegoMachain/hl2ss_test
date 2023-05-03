@@ -20,6 +20,7 @@ import numpy as np
 import sys
 import time
 
+from std_msgs.msg import Float64MultiArray
 from sensor_msgs import point_cloud2
 from sensor_msgs.msg import PointCloud2, PointField
 from robotics_demo. msg import PosRot, State
@@ -54,6 +55,7 @@ class controler():
         self.stopBbox = False
         self.numPCD = 10 #Number of point clouds to send to Ditto
         self.sendData = False #Flag to see if we send data to ditto or we wait
+        self.QRPose = Float64MultiArray() #Pose to send to pcd_listener
         print("Init")
         
     def call_state(self, data):
@@ -144,6 +146,8 @@ count = 0
 line_set = getCoordinateSystem(1)
 
 
+
+
 #Listen to the pose
 def callback(data):
     sink_depth.acquire()
@@ -207,6 +211,12 @@ def callback(data):
 
                         #Translate the mesh with the T matrix
                         control.pcd = control.pcd.transform(T)
+
+                        #control.QRPose.data = [[data.pos_x, data.pos_y, data.pos_z, data.rot_x, data.rot_y, data.rot_z]]
+                        #control.QRPose.data = [float(i) for i in control.QRPose.data]
+
+                        #print("QR data = ", control.QRPose.data)
+                        #pubQR.publish(control.QRPose)
 
                     control.vis = o3d.visualization.Visualizer()
                     control.vis.create_window()
@@ -280,6 +290,14 @@ def callback(data):
                         #Translate the mesh with the T matrix
                         control.pcd = control.pcd.transform(T)
 
+                        #Publish the QR to pcd_listener
+                        
+                        control.QRPose.data = [[data.pos_x, data.pos_y, data.pos_z, data.rot_x, data.rot_y, data.rot_z]]
+                        
+                        pubQR.publish(control.QRPose)
+
+
+
                     #pcd = pcd.crop(bbox)
                     control.vis.update_geometry(control.pcd)
 
@@ -311,9 +329,13 @@ fields = [PointField('x', 0, PointField.FLOAT32, 1),
           ]
 header = Header()
 
+#Get the state of the HoloLens buttons
+pubQR = rospy.Publisher("QR", Float64MultiArray, queue_size = 10)
+
+
+
 rospy.spin()
 
-sys.exit()
 
 
 
