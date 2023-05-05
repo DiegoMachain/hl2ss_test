@@ -97,41 +97,6 @@ def transformDitto(pivot, vec, scale, center, sphere = True, refframe = True):
         ref_frame = getCoordinateSystem(1)
     
 
-    """ #Create the vector and sphere
-    #Transform back 
-    sphere_pivot = vec
-    center_transform = np.eye(4)
-    center_transform[:3, 3] = pivot
-    center_transform_2 = np.eye(4)
-    center_transform_2[:3, 3] = center
-
-    sphere = o3d.geometry.TriangleMesh.create_sphere(radius = .05)
-    sphere.compute_vertex_normals()
-    sphere.transform(center_transform)
-    sphere.rotate(R, center=(0, 0, 0))
-    sphere.scale(scale, np.zeros((3, 1)))
-
-    sphere.transform(center_transform_2)
-
-    vec_len = scale
-    arrow = o3d.geometry.TriangleMesh.create_arrow(
-        cone_height = 0.2 * vec_len,
-        cone_radius = 0.06 * vec_len,
-        cylinder_height = 0.8 * vec_len,
-        cylinder_radius = 0.04 * vec_len
-    )
-
-
-    o3d.visualization.draw_geometries([arrow,ref_frame])
-    arrow.compute_vertex_normals()
-    arrow.rotate(rot_mat_2, center = (0,0,0))
-
-    arrow.transform(center_transform)
-
-    arrow.rotate(R, center = (0,0,0))
-    arrow.scale(scale, np.zeros((3,1)))
-    arrow.transform(center_transform_2) """
-
     #Compute rotation matrix based on the results of Ditto
     rot_mat_2 = vector_to_rotation(vec)
 
@@ -153,4 +118,4 @@ def transformDitto(pivot, vec, scale, center, sphere = True, refframe = True):
     #Line to draw on open3d
     arrow_2 = drawLines(sphere_point, arrow_vec)
 
-    return arrow_vec, sphere_point, sphere_2, ref_frame, arrow_2
+    return vec, sphere_point, sphere_2, ref_frame, arrow_2

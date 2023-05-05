@@ -167,7 +167,8 @@ def callback(data):
             rgbd = o3d.geometry.RGBDImage.create_from_color_and_depth(o3d.geometry.Image(rgb), o3d.geometry.Image(depth), depth_scale=1, depth_trunc=max_depth, convert_rgb_to_intensity=False)
             depth_world_to_camera = hl2ss_3dcv.world_to_reference(data_lt.pose) @ hl2ss_3dcv.rignode_to_camera(calibration_lt.extrinsics)
 
-            volume.integrate(rgbd, intrinsics_depth, depth_world_to_camera.transpose())
+            #Camera to world
+            volume.integrate(rgbd, intrinsics_depth, (depth_world_to_camera.transpose()))
             pcd_tmp = volume.extract_point_cloud()
 
 
@@ -210,13 +211,10 @@ def callback(data):
                         T[2,3] = -data.pos_z
 
                         #Translate the mesh with the T matrix
-                        control.pcd = control.pcd.transform(T)
+                        
+                        #No transformation
+                        #control.pcd = control.pcd.transform(T)
 
-                        #control.QRPose.data = [[data.pos_x, data.pos_y, data.pos_z, data.rot_x, data.rot_y, data.rot_z]]
-                        #control.QRPose.data = [float(i) for i in control.QRPose.data]
-
-                        #print("QR data = ", control.QRPose.data)
-                        #pubQR.publish(control.QRPose)
 
                     control.vis = o3d.visualization.Visualizer()
                     control.vis.create_window()
@@ -288,7 +286,7 @@ def callback(data):
                         T[2,3] = -data.pos_z
 
                         #Translate the mesh with the T matrix
-                        control.pcd = control.pcd.transform(T)
+                        #control.pcd = control.pcd.transform(T)
 
                         #Publish the QR to pcd_listener
                         

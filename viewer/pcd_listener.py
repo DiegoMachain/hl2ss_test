@@ -215,17 +215,18 @@ class DittoManager():
             #Necesito la pose del QR
             print("QR pose = ", self.pos_x)
 
-            req.input.rot_x = self.data_to_send.data[3]
-            req.input.rot_y = self.data_to_send.data[4]
-            req.input.rot_z = self.data_to_send.data[5]
+            req.input.rot_x = self.data_to_send.data[0]
+            req.input.rot_y = self.data_to_send.data[1]
+            req.input.rot_z = self.data_to_send.data[2]
 
-            req.input.pos_x = self.data_to_send.data[0] + self.pos_x
-            req.input.pos_y = self.data_to_send.data[1] + self.pos_y
-            req.input.pos_z = self.data_to_send.data[2] + self.pos_z
+            #req.input.pos_x = self.data_to_send.data[0] + self.pos_x
+            #req.input.pos_y = self.data_to_send.data[1] + self.pos_y
+            #req.input.pos_z = self.data_to_send.data[2] + self.pos_z
 
-            #req.input.pos_x = .07
-            #req.input.pos_y = .07
-            #req.input.pos_z = .07
+            req.input.pos_x = self.data_to_send.data[3]
+            req.input.pos_y = self.data_to_send.data[4]
+            req.input.pos_z = self.data_to_send.data[5]
+
 
         return PositionServiceResponse(req.input)
 
