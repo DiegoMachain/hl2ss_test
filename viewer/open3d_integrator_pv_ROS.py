@@ -216,10 +216,10 @@ def callback(data):
                         #control.pcd = control.pcd.transform(T)
 
 
-                    control.vis = o3d.visualization.Visualizer()
-                    control.vis.create_window()
-                    control.vis.add_geometry(control.pcd)
-                    control.vis.add_geometry(line_set)
+                    #control.vis = o3d.visualization.Visualizer()
+                    #control.vis.create_window()
+                    #control.vis.add_geometry(control.pcd)
+                    #control.vis.add_geometry(line_set)
 
                 #Stop the scanning to obtain the bounding box
                 elif control.state.state == 6.:
@@ -297,14 +297,15 @@ def callback(data):
 
 
                     #pcd = pcd.crop(bbox)
-                    control.vis.update_geometry(control.pcd)
+                    #control.vis.update_geometry(control.pcd)
 
                     #Publish the point cloud
                     pc2 = point_cloud2.create_cloud(header, fields, np.asarray(control.pcd.points))
                     pc2.header.stamp = rospy.Time.now()
                     pub.publish(pc2)  
-                control.vis.poll_events()
-                control.vis.update_renderer()          
+                
+                #control.vis.poll_events()
+                #control.vis.update_renderer()          
 
             #Prepare the sending to Ditto
 
@@ -333,6 +334,11 @@ pubQR = rospy.Publisher("QR", Float64MultiArray, queue_size = 10)
 
 
 rospy.spin()
+
+def hook():
+    print("Shut down")
+
+rospy.on_shutdown(hook)
 
 
 

@@ -1,0 +1,35 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<robot name="Ditto_result">
+  <link name="static">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+      <mass value="1.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="/Users/diego/Desktop/Escritorio_MacBook_Pro_de_Diego/ETH/Fourth_Semester/Semester_Project/Ditto/URDF/Fixed/static.stl"/>
+      </geometry>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0"/>
+    </visual>
+  </link>
+  <link name="mobile">
+    <inertial>
+      <origin xyz="0.0 0.0 0.0" rpy="0.0 -0.0 0.0"/>
+      <mass value="1.0"/>
+      <inertia ixx="1.0" ixy="0.0" ixz="0.0" iyy="1.0" iyz="0.0" izz="1.0"/>
+    </inertial>
+    <visual>
+      <geometry>
+        <mesh filename="/Users/diego/Desktop/Escritorio_MacBook_Pro_de_Diego/ETH/Fourth_Semester/Semester_Project/Ditto/URDF/Mobile/mobile.stl"/>
+      </geometry>
+      <origin xyz="0.049054328352212906 -0.04343188554048538 0.17117778956890106" rpy="0.0 0.0 0.0"/>
+    </visual>
+  </link>
+  <joint name="static_to_mobile" type="continuous">
+    <parent link="static"/>
+    <child link="mobile"/>
+    <axis xyz="1. 0. 0."/>
+    <origin xyz="-0.049054328352212906 0.04343188554048538 -0.17117778956890106" rpy="0.0 0.0 0.0"/>
+  </joint>
+</robot>
